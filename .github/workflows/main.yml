@@ -113,6 +113,26 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Create .env file on server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        key: ${{ secrets.SSH_KEY }}
+        passphrase: ${{ secrets.SSH_PASSPHRASE }}
+        script: |
+          cat > ~/foodgram/.env <<'EOF'
+          DB_NAME=${{ secrets.DB_NAME }}
+          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
+          DEBUG=False
+          ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
+          DB_ENGINE=django.db.backends.postgresql
+          DB_HOST=db
+          DB_PORT=5432
+          EOF
+
     - name: Copy all files to server
       uses: appleboy/scp-action@v0.1.7
       with:
@@ -132,7 +152,7 @@ jobs:
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
           cd foodgram/infra
-          sudo docker compose -f docker-compose.production.yml up -d --build
+          sudo docker compose --env-file ../.env -f docker-compose.production.yml up -d --build
           sudo docker system prune -f
 
     - name: Run migrations
@@ -144,4 +164,4 @@ jobs:
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
           cd foodgram/infra
-          sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+          sudo docker compose --env-file ../.env -f docker-compose.production.yml exec backend python manage.py migrate
