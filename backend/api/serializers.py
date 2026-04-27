@@ -250,8 +250,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
                 Ingredient.objects.get(id=ingredient_data["id"])
             except Ingredient.DoesNotExist:
                 raise serializers.ValidationError(
-                    {"ingredients": f'Ингредиент с id {
-                        ingredient_data["id"]} не существует'}
+                    {"ingredients": f'Ингредиент с id {ingredient_data["id"]} не существует'}  # noqa
                 )
             IngredientAmount.objects.create(
                 recipe=recipe,
