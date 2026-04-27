@@ -38,8 +38,7 @@ services:
   frontend:
     container_name: foodgram_frontend
     build: ../frontend/
-    volumes:
-      - ../frontend/build:/app/build
+    restart: always
 
   nginx:
     container_name: foodgram_nginx
@@ -50,8 +49,8 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - static_volume:/var/html/static/
       - media_volume:/var/html/media/
-      - ../frontend/build:/usr/share/nginx/html/
     depends_on:
       - backend
       - frontend
     restart: always
+  
