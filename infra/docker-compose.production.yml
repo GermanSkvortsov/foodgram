@@ -2,6 +2,7 @@ volumes:
   pg_data:
   static_volume:
   media_volume:
+  frontend_build:
 
 services:
   db:
@@ -38,6 +39,8 @@ services:
   frontend:
     container_name: foodgram_frontend
     build: ../frontend/
+    volumes:
+      - frontend_build:/build-volume
     restart: always
 
   nginx:
@@ -49,8 +52,8 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - static_volume:/var/html/static/
       - media_volume:/var/html/media/
+      - frontend_build:/usr/share/nginx/html
     depends_on:
       - backend
       - frontend
     restart: always
-  
