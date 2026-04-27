@@ -12,4 +12,4 @@ FROM alpine:latest
 
 COPY --from=build /app/build /build
 
-CMD cp -r /build/* /build-volume/ && echo "✅ Frontend build copied to volume" && exit 0
+CMD cp -r /build/* /frontend-output/ && echo "✅ Frontend build copied" && exit 0

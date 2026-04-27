@@ -38,7 +38,7 @@ services:
     container_name: foodgram_frontend
     build: ../frontend/
     volumes:
-      - frontend_build:/build-volume
+      - frontend_build:/frontend-output
     restart: "no"
 
   nginx:
