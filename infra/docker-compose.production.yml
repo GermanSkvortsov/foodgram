@@ -8,8 +8,6 @@ services:
   db:
     container_name: foodgram_db
     image: postgres:13.0-alpine
-    env_file:
-      - ../.env
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${POSTGRES_USER}
