@@ -37,7 +37,7 @@ services:
 
   frontend:
     container_name: foodgram_frontend
-    image: geravalerin/foodgram_frontend:latest
+    build: ../frontend/
     volumes:
       - ../frontend/build:/app/build
 
@@ -53,4 +53,5 @@ services:
       - ../frontend/build:/usr/share/nginx/html/
     depends_on:
       - backend
+      - frontend
     restart: always
