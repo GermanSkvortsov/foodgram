@@ -113,14 +113,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Copy files to server
+    - name: Copy all files to server
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USER }}
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
-        source: "infra/docker-compose.production.yml, infra/nginx/default.conf"
+        source: "infra/, backend/, frontend/"
         target: "foodgram"
 
     - name: Execute commands on server
@@ -132,7 +132,5 @@ jobs:
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
           cd foodgram/infra
-          sudo docker compose -f docker-compose.production.yml pull
-          sudo docker compose -f docker-compose.production.yml down
           sudo docker compose -f docker-compose.production.yml up -d --build
           sudo docker system prune -f
