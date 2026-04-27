@@ -24,7 +24,7 @@ jobs:
       run: |
         flake8 backend --exclude=venv,migrations
 
-  build_and_push:
+  build_backend:
     runs-on: ubuntu-latest
     needs: tests
     steps:
@@ -34,29 +34,81 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
+    - name: Build Backend image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend/
+        push: false
+        tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:latest
+        outputs: type=docker,dest=/tmp/backend_image.tar
+
+    - name: Upload Backend artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend_image
+        path: /tmp/backend_image.tar
+        retention-days: 1
+
+  build_frontend:
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Frontend image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend/
+        push: false
+        tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_frontend:latest
+        outputs: type=docker,dest=/tmp/frontend_image.tar
+
+    - name: Upload Frontend artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend_image
+        path: /tmp/frontend_image.tar
+        retention-days: 1
+
+  push_images:
+    runs-on: ubuntu-latest
+    needs: [build_backend, build_frontend]
+    steps:
     - name: Login to DockerHub
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build and push backend
-      uses: docker/build-push-action@v5
+    - name: Download Backend artifact
+      uses: actions/download-artifact@v4
       with:
-        context: ./backend/
-        push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:latest
+        name: backend_image
+        path: /tmp
 
-    - name: Build and push frontend
-      uses: docker/build-push-action@v5
+    - name: Load and Push Backend
+      run: |
+        docker load --input /tmp/backend_image.tar
+        docker push ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:latest
+
+    - name: Download Frontend artifact
+      uses: actions/download-artifact@v4
       with:
-        context: ./frontend/
-        push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_frontend:latest
+        name: frontend_image
+        path: /tmp
+
+    - name: Load and Push Frontend
+      run: |
+        docker load --input /tmp/frontend_image.tar
+        docker push ${{ secrets.DOCKER_USERNAME }}/foodgram_frontend:latest
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build_and_push
+    needs: push_images
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
