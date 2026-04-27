@@ -10,8 +10,6 @@ RUN npm run build
 
 FROM alpine:latest
 
-WORKDIR /work
+COPY --from=build /app/build /build
 
-COPY --from=build /app/build /work/build
-
-CMD cp -r /work/build/* /build-volume/ && tail -f /dev/null
+CMD cp -r /build/* /build-volume/ && echo "✅ Frontend build copied to volume" && exit 0
