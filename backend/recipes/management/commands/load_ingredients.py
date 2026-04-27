@@ -51,14 +51,22 @@ class Command(BaseCommand):
                 continue
 
             try:
-                Ingredient.objects.create(name=name, measurement_unit=measurement_unit)
+                Ingredient.objects.create(
+                    name=name, measurement_unit=measurement_unit
+                )
                 created_count += 1
             except IntegrityError:
                 self.stdout.write(
-                    self.style.WARNING(f"Ингредиент уже существует: {name}, {measurement_unit}")
+                    self.style.WARNING(
+                        f"Ингредиент уже существует: {name}, "
+                        f"{measurement_unit}"
+                    )
                 )
                 skipped_count += 1
 
         self.stdout.write(
-            self.style.SUCCESS(f"Загрузка завершена. Создано: {created_count}, Пропущено: {skipped_count}")
+            self.style.SUCCESS(
+                f"Загрузка завершена. Создано: {created_count}, "
+                f"Пропущено: {skipped_count}"
+            )
         )
