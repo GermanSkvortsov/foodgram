@@ -123,7 +123,7 @@ jobs:
         source: "infra/, backend/, frontend/"
         target: "foodgram"
 
-    - name: Execute commands on server
+    - name: Deploy containers
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.HOST }}
@@ -134,3 +134,14 @@ jobs:
           cd foodgram/infra
           sudo docker compose -f docker-compose.production.yml up -d --build
           sudo docker system prune -f
+
+    - name: Run migrations
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        key: ${{ secrets.SSH_KEY }}
+        passphrase: ${{ secrets.SSH_PASSPHRASE }}
+        script: |
+          cd foodgram/infra
+          sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
