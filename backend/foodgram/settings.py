@@ -143,7 +143,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Performance
 CONN_MAX_AGE = None
 
-STATIC_URL = '/static/'
+STATIC_URL = '/backend-static/'
 STATIC_ROOT = BASE_DIR / 'static'
 
 MEDIA_URL = '/media/'
