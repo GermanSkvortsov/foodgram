@@ -140,7 +140,7 @@ jobs:
         username: ${{ secrets.USER }}
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
-        source: "infra/, backend/, frontend/"
+        source: "infra/, backend/, frontend/, data/"
         target: "foodgram"
 
     - name: Deploy containers
@@ -169,3 +169,23 @@ jobs:
           cd foodgram/infra
           sudo docker compose --env-file ../.env -f docker-compose.production.yml exec backend python manage.py migrate
           sudo docker compose --env-file ../.env -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
+
+    - name: Load initial data
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        key: ${{ secrets.SSH_KEY }}
+        passphrase: ${{ secrets.SSH_PASSPHRASE }}
+        script: |
+          cd foodgram
+          sudo docker cp data/ingredients.json foodgram_backend:/tmp/ingredients.json
+          cd infra
+          sudo docker compose --env-file ../.env -f docker-compose.production.yml exec backend python manage.py load_ingredients /tmp/ingredients.json
+          sudo docker compose --env-file ../.env -f docker-compose.production.yml exec backend python manage.py shell -c "
+          from recipes.models import Tag
+          for name, slug in [('Завтрак', 'breakfast'), ('Обед', 'lunch'), ('Ужин', 'dinner')]:
+              Tag.objects.get_or_create(name=name, slug=slug)
+          print('Tags OK')
+          "
+          
