@@ -12,7 +12,7 @@ from .models import (
     IngredientAmount,
     Recipe,
     ShoppingCart,
-    Tag
+    Tag,
 )
 
 
@@ -49,12 +49,13 @@ class RecipeAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "author", "cooking_time", "created_at")
     list_filter = ("tags", "author", "created_at")
     search_fields = ("name", "author__username", "tags__name")
-    inlines = [IngredientAmountInline]
+    inlines = (IngredientAmountInline,)
     readonly_fields = ("created_at", "favorite_count")
 
     def favorite_count(self, obj):
         """Возвращает число добавлений рецепта в избранное."""
         return obj.favorites.count()
+
     favorite_count.short_description = "Число добавлений в избранное"
 
 

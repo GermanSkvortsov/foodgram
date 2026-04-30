@@ -5,10 +5,10 @@
 """
 
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 
-# Константы
-EMAIL_MAX_LEN = 254
+
 USERNAME_MAX_LEN = 150
 FIRST_NAME_MAX_LEN = 150
 LAST_NAME_MAX_LEN = 150
@@ -17,8 +17,10 @@ LAST_NAME_MAX_LEN = 150
 class User(AbstractUser):
     """Кастомная модель пользователя с email в качестве логина."""
 
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ("username", "first_name", "last_name")  # type: ignore
+
     email = models.EmailField(
-        max_length=EMAIL_MAX_LEN,
         unique=True,
         verbose_name="Адрес электронной почты"
     )
@@ -62,16 +64,21 @@ class Follow(models.Model):
         verbose_name="Автор",
     )
     created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name="Дата подписки")
+        auto_now_add=True, verbose_name="Дата подписки"
+    )
 
     class Meta:
         verbose_name = "Подписка"
         verbose_name_plural = "Подписки"
-        constraints = [
+        constraints = (
             models.UniqueConstraint(
-                fields=["user", "author"], name="unique_follow"
-            )
-        ]
+                fields=("user", "author"), name="unique_follow"
+            ),
+        )
 
     def __str__(self):
         return f"{self.user} подписан на {self.author}"
+
+    def clean(self):
+        if self.user == self.author:
+            raise ValidationError("Нельзя подписаться на самого себя")

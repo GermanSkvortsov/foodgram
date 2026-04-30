@@ -11,7 +11,7 @@ from .views import (
     IngredientViewSet,
     RecipeViewSet,
     SubscriptionViewSet,
-    TagViewSet
+    TagViewSet,
 )
 
 router = DefaultRouter()
@@ -22,7 +22,5 @@ router.register("users", SubscriptionViewSet, basename="user")
 
 urlpatterns = [
     path("", include(router.urls)),
-    path("", include("djoser.urls")),
-    path("", include("djoser.urls.authtoken")),
     path("auth/", include("djoser.urls.authtoken")),
 ]
