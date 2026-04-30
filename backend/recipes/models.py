@@ -19,6 +19,10 @@ INGREDIENT_NAME_MAX_LEN = 128
 INGREDIENT_UNIT_MAX_LEN = 64
 RECIPE_NAME_MAX_LEN = 256
 SHORT_CODE_MAX_LEN = 8
+MIN_COOKING_TIME = 1
+MAX_COOKING_TIME = 32000
+MIN_AMOUNT = 1
+MAX_AMOUNT = 32000
 
 
 class Tag(models.Model):
@@ -82,14 +86,19 @@ class Recipe(models.Model):
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name="Время приготовления (в минутах)",
         validators=[
-            MinValueValidator(1, message=(
-                "Время приготовления не может быть меньше 1 минуты")),
-            MaxValueValidator(32000, message=(
-                "Время приготовления не может быть больше 32000 минут")),
+            MinValueValidator(
+                MIN_COOKING_TIME,
+                message="Время приготовления не может быть меньше 1 минуты",
+            ),
+            MaxValueValidator(
+                MAX_COOKING_TIME,
+                message="Время приготовления не может быть больше 32000 минут",
+            ),
         ],
     )
     tags = models.ManyToManyField(
-        Tag, related_name="recipes", verbose_name="Теги")
+        Tag, related_name="recipes", verbose_name="Теги"
+    )
     short_code = models.CharField(
         max_length=SHORT_CODE_MAX_LEN,
         unique=True,
@@ -97,7 +106,8 @@ class Recipe(models.Model):
         verbose_name="Короткий код",
     )
     created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name="Дата создания")
+        auto_now_add=True, verbose_name="Дата создания"
+    )
 
     class Meta:
         verbose_name = "Рецепт"
@@ -107,16 +117,16 @@ class Recipe(models.Model):
     def __str__(self):
         return self.name
 
-    def _generate_short_code(self):
-        """Генерирует уникальный короткий код для ссылки."""
-        return uuid.uuid4().hex[:SHORT_CODE_MAX_LEN]
-
     def save(self, *args, **kwargs):
         if not self.short_code:
             self.short_code = self._generate_short_code()
             while Recipe.objects.filter(short_code=self.short_code).exists():
                 self.short_code = self._generate_short_code()
         super().save(*args, **kwargs)
+
+    def _generate_short_code(self):
+        """Генерирует уникальный короткий код для ссылки."""
+        return uuid.uuid4().hex[:SHORT_CODE_MAX_LEN]
 
 
 class IngredientAmount(models.Model):
@@ -137,9 +147,14 @@ class IngredientAmount(models.Model):
     amount = models.PositiveIntegerField(
         verbose_name="Количество",
         validators=[
-            MinValueValidator(1, message="Количество не может быть меньше 1"),
+            MinValueValidator(
+                MIN_AMOUNT,
+                message="Количество не может быть меньше 1",
+            ),
             MaxValueValidator(
-                32000, message="Количество не может быть больше 32000"),
+                MAX_AMOUNT,
+                message="Количество не может быть больше 32000",
+            ),
         ],
     )
 
@@ -173,7 +188,8 @@ class Favorite(models.Model):
         verbose_name="Рецепт",
     )
     created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name="Дата добавления")
+        auto_now_add=True, verbose_name="Дата добавления"
+    )
 
     class Meta:
         verbose_name = "Избранное"
@@ -204,7 +220,8 @@ class ShoppingCart(models.Model):
         verbose_name="Рецепт",
     )
     created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name="Дата добавления")
+        auto_now_add=True, verbose_name="Дата добавления"
+    )
 
     class Meta:
         verbose_name = "Корзина покупок"

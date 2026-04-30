@@ -11,11 +11,7 @@ from django.core.files.base import ContentFile
 from django.db.models import F, Sum
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import (
-    CharFilter,
-    DjangoFilterBackend,
-    FilterSet
-)
+from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
@@ -28,8 +24,7 @@ from rest_framework.response import Response
 
 from recipes.models import Ingredient, IngredientAmount, Recipe, Tag
 from users.models import User
-
-from .filters import RecipeFilter
+from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (
     FavoriteCreateSerializer,
@@ -52,16 +47,6 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
-class IngredientFilter(FilterSet):
-    """Фильтр для поиска ингредиентов по началу названия."""
-
-    name = CharFilter(lookup_expr="istartswith")
-
-    class Meta:
-        model = Ingredient
-        fields = ("name",)
-
-
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet для ингредиентов (только чтение)."""
 
@@ -77,12 +62,14 @@ class SubscriptionViewSet(UserViewSet):
     """ViewSet для подписок и аватара пользователя."""
 
     queryset = User.objects.all()
-    permission_classes = (IsAuthenticated,)
 
+    # Djoser требует get_permissions для разных прав на разные actions.
+    # Без этого метода retrieve требует авторизацию,
+    # что противоречит спецификации API.
     def get_permissions(self):
-        if self.action == "retrieve":
+        if self.action in ("retrieve", "list", "create"):
             return (AllowAny(),)
-        return super().get_permissions()
+        return (IsAuthenticated(),)
 
     @action(
         detail=False,
@@ -140,7 +127,7 @@ class SubscriptionViewSet(UserViewSet):
         author = self.get_object()
         user = request.user
         deleted_count, _ = user.follower.filter(author=author).delete()
-        if deleted_count == 0:
+        if not deleted_count:
             return Response(
                 {"error": "Вы не подписаны на этого автора"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -173,10 +160,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.action in ("create", "partial_update"):
             return RecipeCreateUpdateSerializer
         return RecipeSerializer
-
-    def perform_destroy(self, instance):
-        """Удаляет рецепт."""
-        instance.delete()
 
     @action(
         detail=True,
@@ -211,7 +194,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = self.get_object()
         deleted_count, _ = request.user.favorites.filter(
             recipe=recipe).delete()
-        if deleted_count == 0:
+        if not deleted_count:
             return Response(
                 {"error": "Рецепта нет в избранном"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -240,7 +223,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         deleted_count, _ = (
             request.user.shopping_cart.filter(recipe=recipe).delete()
         )
-        if deleted_count == 0:
+        if not deleted_count:
             return Response(
                 {"error": "Рецепта нет в корзине"},
                 status=status.HTTP_400_BAD_REQUEST,

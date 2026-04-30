@@ -1,11 +1,21 @@
 """
-Фильтры для API рецептов.
+Фильтры для API рецептов и ингредиентов.
 """
 
-from django_filters import AllValuesMultipleFilter, FilterSet
-from django_filters.rest_framework import BooleanFilter, CharFilter
+from django_filters import AllValuesMultipleFilter, CharFilter, FilterSet
+from django_filters.rest_framework import BooleanFilter
 
-from recipes.models import Recipe
+from recipes.models import Ingredient, Recipe
+
+
+class IngredientFilter(FilterSet):
+    """Фильтр для поиска ингредиентов по началу названия."""
+
+    name = CharFilter(lookup_expr="istartswith")
+
+    class Meta:
+        model = Ingredient
+        fields = ("name",)
 
 
 class RecipeFilter(FilterSet):

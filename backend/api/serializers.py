@@ -184,15 +184,27 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             "cooking_time",
         )
 
+    def validate_image(self, value):
+        """Проверяет, что изображение не пустое."""
+        if not value:
+            raise serializers.ValidationError("Изображение обязательно")
+        return value
+
     def validate(self, data):
-        """Валидация тегов, ингредиентов и изображения."""
+        """Валидация тегов и ингредиентов."""
         tags = data.get("tags", [])
         ingredients = data.get("ingredients", [])
-        image = data.get("image")
 
-        if not image:
+        request = self.context.get("request")
+        is_patch = request and request.method == "PATCH"
+
+        if is_patch and "tags" not in self.initial_data:  # type: ignore
             raise serializers.ValidationError(
-                {"image": "Изображение обязательно"}
+                {"tags": "Это поле обязательно"}
+            )
+        if is_patch and "ingredients" not in self.initial_data:  # type: ignore
+            raise serializers.ValidationError(
+                {"ingredients": "Это поле обязательно"}
             )
 
         if not tags:
@@ -241,16 +253,14 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """Обновляет рецепт."""
-        tags = validated_data.pop("tags", None)
-        ingredients_data = validated_data.pop("ingredients", None)
+        tags = validated_data.pop("tags")
+        ingredients_data = validated_data.pop("ingredients")
 
         instance = super().update(instance, validated_data)
 
-        if tags is not None:
-            instance.tags.set(tags)
-        if ingredients_data is not None:
-            instance.ingredients_amounts.all().delete()
-            self._save_ingredients(instance, ingredients_data)
+        instance.tags.set(tags)
+        instance.ingredients_amounts.all().delete()
+        self._save_ingredients(instance, ingredients_data)
 
         return instance
 
