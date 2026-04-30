@@ -11,7 +11,11 @@ from django.core.files.base import ContentFile
 from django.db.models import F, Sum
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
+from django_filters.rest_framework import (
+    CharFilter,
+    DjangoFilterBackend,
+    FilterSet
+)
 from djoser.views import UserViewSet
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
@@ -48,14 +52,24 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
+class IngredientFilter(FilterSet):
+    """Фильтр для поиска ингредиентов по началу названия."""
+
+    name = CharFilter(lookup_expr="istartswith")
+
+    class Meta:
+        model = Ingredient
+        fields = ("name",)
+
+
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet для ингредиентов (только чтение)."""
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (AllowAny,)
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ("^name",)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
     pagination_class = None
 
 
@@ -176,8 +190,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         short_url = request.build_absolute_uri(f"/s/{recipe.short_code}/")
         return Response({"short-link": short_url})
 
-    @action(detail=True, methods=["post"],
-            permission_classes=[IsAuthenticated])
+    @action(detail=True,
+            methods=["post"],
+            permission_classes=[IsAuthenticated]
+            )
     def favorite(self, request, pk=None):
         """Добавляет рецепт в избранное."""
         recipe = self.get_object()
@@ -202,8 +218,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=["post"],
-            permission_classes=[IsAuthenticated])
+    @action(detail=True,
+            methods=["post"],
+            permission_classes=[IsAuthenticated]
+            )
     def shopping_cart(self, request, pk=None):
         """Добавляет рецепт в корзину покупок."""
         recipe = self.get_object()
