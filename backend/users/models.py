@@ -75,7 +75,7 @@ class Follow(models.Model):
                 fields=("user", "author"), name="unique_follow"
             ),
             CheckConstraint(
-                condition=~Q(user=F("author")),
+                check=~Q(user=F("author")),
                 name="user_not_author",
             ),
         )
