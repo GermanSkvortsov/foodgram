@@ -5,8 +5,8 @@
 """
 
 from django.contrib.auth.models import AbstractUser
-from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import CheckConstraint, F, Q
 
 
 USERNAME_MAX_LEN = 150
@@ -74,11 +74,11 @@ class Follow(models.Model):
             models.UniqueConstraint(
                 fields=("user", "author"), name="unique_follow"
             ),
+            CheckConstraint(
+                condition=~Q(user=F("author")),
+                name="user_not_author",
+            ),
         )
 
     def __str__(self):
         return f"{self.user} подписан на {self.author}"
-
-    def clean(self):
-        if self.user == self.author:
-            raise ValidationError("Нельзя подписаться на самого себя")
